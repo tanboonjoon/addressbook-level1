@@ -157,7 +157,16 @@ public class AddressBook {
      * Offset required to convert between 1-indexing and 0-indexing.COMMAND_
      */
     private static final int DISPLAYED_INDEX_OFFSET = 1;
-
+    
+    /**
+     * Constants and Variable use in Edit Command
+     *
+     */
+    private static final int PERSON_EDIT_INDEX = 0;
+    private static final int PERSON_EDIT_TYPE = 1;
+    private static final int PERSON_EDIT_NEW = 2;
+    
+    private static final int PERSON_EDIT_COUNT = 3;
 
 //test
     /**
@@ -208,24 +217,8 @@ public class AddressBook {
      * ====================================================================
      */
     public static void main(String[] args) {
-       // showWelcomeMessage();
-        System.out.println(LINE_PREFIX + DIVIDER );
-        System.out.println(LINE_PREFIX + DIVIDER );
-        System.out.println(LINE_PREFIX + VERSION );
-        System.out.println(LINE_PREFIX + MESSAGE_WELCOME );
-        System.out.println(LINE_PREFIX + DIVIDER );
-        if (args.length >= 2) {
-            showToUser(MESSAGE_INVALID_PROGRAM_ARGS);
-            exitProgram();
-        }
-
-        if (args.length == 1) {
-            setupGivenFileForStorage(args[0]);
-        }
-
-        if(args.length == 0) {
-            setupDefaultFileForStorage();
-        }
+        showWelcomeMessage();
+        processProgramArgs(args);
         loadDataFromStorage();
         
         while (true) {
@@ -387,44 +380,111 @@ public class AddressBook {
             return getMessageForInvalidCommandInput(commandType, getUsageInfoForAllCommands());
         }
     }
-
+/**
+ * 
+ * @param commandArgs contain edit information input by user
+ * @return feedback result by operation result
+ */
     private static String executeEditPersonProperties(String commandArgs) {
 		// TODO Auto-generated method stub
-    	String[] arr = commandArgs.split("/");
-    	if(arr.length < 2) {
+    	final Optional<String[]> decodeResult = decodeEditDataFromString(commandArgs);
+    	if(!decodeResult.isPresent()) {
     		return getUsageInfoForEditCommand();
-    	}
-    	String[] indexWithType = arr[0].split(" ");
-    	if(indexWithType.length < 2) {
-    		return getUsageInfoForEditCommand();
-    	}
-    	int index = Integer.parseInt(indexWithType[0]) - 1 ;
-    	String changes = arr[1];
-    	String old = null ;
-    	if(index > ALL_PERSONS.size() || index < 0) {
-    		return "Invalid Person";
-    	} else {
-    		String type = indexWithType[1];
-    		switch(type) {
-    		case "n":
-    			old = ALL_PERSONS.get(index)[0];
-    			ALL_PERSONS.get(index)[0] = changes;
-    			break;
-    		case "p":
-    			old = ALL_PERSONS.get(index)[1];
-    			ALL_PERSONS.get(index)[1] = changes;
-    			break;
-    		case "e":
-    			old = ALL_PERSONS.get(index)[2];
-    			ALL_PERSONS.get(index)[2] = changes;
-    			break;
-    		
-    	}
     	}
     	
-    	return old + " changes to " + changes;
+    	final String[] personToEdit = decodeResult.get();
+    	String type = personToEdit[PERSON_EDIT_TYPE];
+    	int index = Integer.parseInt(personToEdit[PERSON_EDIT_INDEX]) - DISPLAYED_INDEX_OFFSET;
+    	String changes = personToEdit[PERSON_EDIT_NEW];
+
+    	return editPersonProperties(index,type, changes) ; 
+
+    	
 		
 	}
+    
+    private static String editPersonProperties(int index, String type, String changes) {
+    	String beforeChange = null;
+    	switch(type) {
+    	case "n":
+    		beforeChange = ALL_PERSONS.get(index)[PERSON_DATA_INDEX_NAME];
+    		ALL_PERSONS.get(index)[PERSON_DATA_INDEX_NAME] = changes;
+    		break;
+    	case "p":
+    		beforeChange = ALL_PERSONS.get(index)[PERSON_DATA_INDEX_PHONE];
+    		ALL_PERSONS.get(index)[PERSON_DATA_INDEX_PHONE] = changes;
+    		break;
+    	case "e":
+    		beforeChange = ALL_PERSONS.get(index)[PERSON_DATA_INDEX_EMAIL];
+    		ALL_PERSONS.get(index)[PERSON_DATA_INDEX_EMAIL] = changes;
+    		break;
+    	default: 
+    		return getUsageInfoForEditCommand();
+
+    	}
+    	return successfulEdit(beforeChange, changes);
+    	
+    
+    }
+    private static String successfulEdit(String beforeChange, String changes) {
+    	return beforeChange + " has been changed to " + changes;
+    }
+    
+    private static Optional<String[]> decodeEditDataFromString(String commandArgs) {
+    	String[] encode = commandArgs.split("/");
+    	if(!isDataExtractableFrom(encode)) {
+    		return Optional.empty();
+    	} 
+    	final String[] personToEdit = makeEditFromData(encode);
+    	return Optional.of(personToEdit);
+  
+    	
+    	}
+    private static String[] makeEditFromData(String[] encode) {
+    	final String[] editInfo = new String[PERSON_EDIT_COUNT];
+    	editInfo[PERSON_EDIT_INDEX] = getIndexFromEncode(encode);
+    	editInfo[PERSON_EDIT_TYPE] = getTypeFromEncode(encode);
+    	editInfo[PERSON_EDIT_NEW] = encode[1];
+    	
+    	return editInfo;
+    	
+    }
+    private static String getIndexFromEncode(String[] encode) {
+    	String[] splitData =  encode[0].split(" ");
+    	return splitData[0];
+    }
+    
+    private static String getTypeFromEncode(String[] encode) { 
+    	String[] splitData = encode[0].split(" ");
+    	return splitData[1];
+    	
+    }
+    private static boolean isDataExtractableFrom(String[] encode) {
+		// TODO Auto-generated method stub
+    	if(encode.length != 2) {
+    		return false;
+    	}
+    	return isDataCorrectType(encode);
+		
+	}
+	private static boolean isDataCorrectType(String[] encode) {
+		// TODO Auto-generated method stub
+		String[] splitData = encode[0].split(" ");
+		if(splitData.length < 2) {
+			return false;
+		}
+		int index = Integer.parseInt(splitData[0]) ;
+		if(index > ALL_PERSONS.size() || index < 1) {
+			return false;
+		}
+		return true;
+	}
+
+	
+	/**
+	 * Sort Address book alphabetically 
+	 * @return a String msg to inform user that sorted has been completed
+	 */
 
 	private static String executeSortAddressBook() {
 		// TODO Auto-generated method stub
@@ -453,8 +513,8 @@ public class AddressBook {
 
     /**
      * Constructs a generic feedback message for an invalid command from user, with instructions for correct usage.
-     *
      * @param correctUsageInfo message showing the correct usage
+     *
      * @return invalid command args feedback message
      */
     private static String getMessageForInvalidCommandInput(String userCommand, String correctUsageInfo) {
