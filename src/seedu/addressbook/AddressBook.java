@@ -366,21 +366,59 @@ public class AddressBook {
         final String commandArgs = commandTypeAndParams[1];
         switch (commandType) {
         case COMMAND_ADD_WORD:
-            return executeAddPerson(commandArgs);
+            final Optional<String[]> decodeResult = decodePersonFromString(commandArgs);
+
+            // checks if args are valid (decode result will not be present if the person is invalid)
+            if (!decodeResult.isPresent()) {
+                return getMessageForInvalidCommandInput(COMMAND_ADD_WORD, getUsageInfoForAddCommand());
+            }
+
+            // add the person as specified
+            final String[] personToAdd = decodeResult.get();
+            addPersonToAddressBook(personToAdd);
+            return getMessageForSuccessfulAddPerson(personToAdd);
         case COMMAND_FIND_WORD:
-            return executeFindPersons(commandArgs);
+            final Set<String> keywords = extractKeywordsFromFindPersonArgs(commandArgs);
+            final ArrayList<String[]> personsFound = getPersonsWithNameContainingAnyKeyword(keywords);
+            showToUser(personsFound);
+            return getMessageForPersonsDisplayedSummary(personsFound);
         case COMMAND_LIST_WORD:
-            return executeListAllPersonsInAddressBook();
+            ArrayList<String[]> toBeDisplayed = getAllPersonsInAddressBook();
+            showToUser(toBeDisplayed);
+            return getMessageForPersonsDisplayedSummary(toBeDisplayed);
         case COMMAND_DELETE_WORD:
-            return executeDeletePerson(commandArgs);
+        	if (!isDeletePersonArgsValid(commandArgs)) {
+                return getMessageForInvalidCommandInput(COMMAND_DELETE_WORD, getUsageInfoForDeleteCommand());
+            }
+            final int targetVisibleIndex = extractTargetIndexFromDeletePersonArgs(commandArgs);
+            if (!isDisplayIndexValidForLastPersonListingView(targetVisibleIndex)) {
+                return MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
+            }
+            final String[] targetInModel = getPersonByLastVisibleIndex(targetVisibleIndex);
+            return deletePersonFromAddressBook(targetInModel) ? getMessageForSuccessfulDelete(targetInModel) // success
+                                                              : MESSAGE_PERSON_NOT_IN_ADDRESSBOOK; // not found
         case COMMAND_CLEAR_WORD:
-            return executeClearAddressBook();
+        	clearAddressBook();
+        	return MESSAGE_ADDRESSBOOK_CLEARED;
         case COMMAND_HELP_WORD:
-            return getUsageInfoForAllCommands();
+            return getUsageInfoForAddCommand() + LS
+                    + getUsageInfoForFindCommand() + LS
+                    + getUsageInfoForViewCommand() + LS
+                    + getUsageInfoForDeleteCommand() + LS
+                    + getUsageInfoForClearCommand() + LS
+                    + getUsageInfoForExitCommand() + LS
+                    + getUsageInfoForSortCommand() + LS
+                    + getUsageInfoForEditCommand() + LS
+                    + getUsageInfoForHelpCommand();
         case COMMAND_EXIT_WORD:
-            executeExitProgramRequest();
+        	exitProgram();
         case COMMAND_SORT_WORD:
-        	return executeSortAddressBook();
+    		Collections.sort(ALL_PERSONS, new Comparator<String[]>() {
+    			public int compare(String[] name1, String[] name2) {
+    				return name1[0].compareTo(name2[0]);
+    			}
+    		});
+    		return getMessageForSort();
         case COMMAND_EDIT_WORD:
         	return executeEditPersonProperties(commandArgs);
         default:
