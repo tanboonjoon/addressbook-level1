@@ -208,14 +208,14 @@ public class AddressBook {
      * ====================================================================
      */
     public static void main(String[] args) {
-       // showWelcomeMessage();
+    	
         System.out.println(LINE_PREFIX + DIVIDER );
         System.out.println(LINE_PREFIX + DIVIDER );
         System.out.println(LINE_PREFIX + VERSION );
         System.out.println(LINE_PREFIX + MESSAGE_WELCOME );
         System.out.println(LINE_PREFIX + DIVIDER );
         if (args.length >= 2) {
-            showToUser(MESSAGE_INVALID_PROGRAM_ARGS);
+        	System.out.println(LINE_PREFIX + MESSAGE_INVALID_PROGRAM_ARGS);
             exitProgram();
         }
 
@@ -229,8 +229,8 @@ public class AddressBook {
         loadDataFromStorage();
         
         while (true) {
-            String userCommand = getUserInput();
-            echoUserCommand(userCommand);
+            String userCommand = getUserInput();          
+            showToUser("[Command entered:" + userCommand + "]");
             String feedback = executeCommand(userCommand);
             showResultToUser(feedback);
         }
