@@ -167,6 +167,13 @@ public class AddressBook {
     private static final int PERSON_EDIT_NEW = 2;
     
     private static final int PERSON_EDIT_COUNT = 3;
+    
+    private static final int PERSON_INDEX_TYPE = 0;
+    private static final int PERSON_NEW_CHANGES = 1;
+    
+    private static final int PERSON_INDEX = 0;
+    private static final int PERSON_TYPE = 1;
+    
 
 //test
     /**
@@ -442,19 +449,20 @@ public class AddressBook {
     	final String[] editInfo = new String[PERSON_EDIT_COUNT];
     	editInfo[PERSON_EDIT_INDEX] = getIndexFromEncode(encode);
     	editInfo[PERSON_EDIT_TYPE] = getTypeFromEncode(encode);
-    	editInfo[PERSON_EDIT_NEW] = encode[1];
+    	editInfo[PERSON_EDIT_NEW] = encode[PERSON_NEW_CHANGES];
     	
     	return editInfo;
-    	
     }
+    	
     private static String getIndexFromEncode(String[] encode) {
-    	String[] splitData =  encode[0].split(" ");
-    	return splitData[0];
+    
+    	String[] splitData =  encode[PERSON_INDEX_TYPE].split(" ");
+    	return splitData[PERSON_INDEX];
     }
     
     private static String getTypeFromEncode(String[] encode) { 
-    	String[] splitData = encode[0].split(" ");
-    	return splitData[1];
+    	String[] splitData = encode[PERSON_INDEX_TYPE].split(" ");
+    	return splitData[PERSON_TYPE];
     	
     }
     private static boolean isDataExtractableFrom(String[] encode) {
@@ -467,11 +475,11 @@ public class AddressBook {
 	}
 	private static boolean isDataCorrectType(String[] encode) {
 		// TODO Auto-generated method stub
-		String[] splitData = encode[0].split(" ");
+		String[] splitData = encode[PERSON_INDEX_TYPE].split(" ");
 		if(splitData.length < 2) {
 			return false;
 		}
-		int index = Integer.parseInt(splitData[0]) ;
+		int index = Integer.parseInt(splitData[PERSON_INDEX]) ;
 		if(index > ALL_PERSONS.size() || index < 1) {
 			return false;
 		}
