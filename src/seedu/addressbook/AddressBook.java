@@ -375,16 +375,38 @@ public class AddressBook {
 
             // add the person as specified
             final String[] personToAdd = decodeResult.get();
-            addPersonToAddressBook(personToAdd);
+            ALL_PERSONS.add(personToAdd);
+			
+			final ArrayList<String> linesToWrite = encodePersonsToStrings(getAllPersonsInAddressBook());
+			try {
+			    Files.write(Paths.get(storageFilePath), linesToWrite);
+			} catch (IOException ioe) {
+			    showToUser(String.format(MESSAGE_ERROR_WRITING_TO_FILE, storageFilePath));
+			    exitProgram();
+			}
             return getMessageForSuccessfulAddPerson(personToAdd);
         case COMMAND_FIND_WORD:
             final Set<String> keywords = extractKeywordsFromFindPersonArgs(commandArgs);
             final ArrayList<String[]> personsFound = getPersonsWithNameContainingAnyKeyword(keywords);
-            showToUser(personsFound);
+            ArrayList<String> detailToShow = new ArrayList<String>();
+			String listAsString = getDisplayString(personsFound);
+			String[] message = { listAsString };
+			for (String m : message) {
+			    System.out.println(LINE_PREFIX + m);
+			}
+			// clone to insulate from future changes to arg list
+			latestPersonListingView = new ArrayList<>(personsFound);
             return getMessageForPersonsDisplayedSummary(personsFound);
         case COMMAND_LIST_WORD:
             ArrayList<String[]> toBeDisplayed = getAllPersonsInAddressBook();
-            showToUser(toBeDisplayed);
+            ArrayList<String> detailToShow1 = new ArrayList<String>();
+			String listAsString1 = getDisplayString(toBeDisplayed);
+			String[] message1 = { listAsString1 };
+			for (String m1 : message1) {
+			    System.out.println(LINE_PREFIX + m1);
+			}
+			// clone to insulate from future changes to arg list
+			latestPersonListingView = new ArrayList<>(toBeDisplayed);
             return getMessageForPersonsDisplayedSummary(toBeDisplayed);
         case COMMAND_DELETE_WORD:
         	if (!isDeletePersonArgsValid(commandArgs)) {
@@ -398,7 +420,8 @@ public class AddressBook {
             return deletePersonFromAddressBook(targetInModel) ? getMessageForSuccessfulDelete(targetInModel) // success
                                                               : MESSAGE_PERSON_NOT_IN_ADDRESSBOOK; // not found
         case COMMAND_CLEAR_WORD:
-        	clearAddressBook();
+        	ALL_PERSONS.clear();
+			savePersonsToFile(getAllPersonsInAddressBook(), storageFilePath);
         	return MESSAGE_ADDRESSBOOK_CLEARED;
         case COMMAND_HELP_WORD:
             return getUsageInfoForAddCommand() + LS
@@ -411,7 +434,8 @@ public class AddressBook {
                     + getUsageInfoForEditCommand() + LS
                     + getUsageInfoForHelpCommand();
         case COMMAND_EXIT_WORD:
-        	exitProgram();
+        	showToUser(MESSAGE_GOODBYE, DIVIDER, DIVIDER);
+			System.exit(0);
         case COMMAND_SORT_WORD:
     		Collections.sort(ALL_PERSONS, new Comparator<String[]>() {
     			public int compare(String[] name1, String[] name2) {
